@@ -18,8 +18,18 @@ def extract_serotype_results(serotype: Category, results: Dict, component_name: 
     results['Enterobase_count1'] = count1
     results['Enterobase_serotype2'] = serotype2
     results['Enterobase_count2'] = count2
+    if serotype["summary"]["serotype"] == '':
+        serotype["summary"]["serotype"] = results["Enterobase_serotype1"]
+    elif serotype["summary"]["serotype"] != results["Enterobase_serotype1"]:
+        serotype["summary"]["serotype"] = results["Enterobase_serotype1"]
+        serotype["summary"]["status"] = "Ambiguous"
+    elif serotype["summary"]["serotype"] == results["Enterobase_serotype1"] and serotype["summary"]["status"] != "Ambiguous":
+        serotype["summary"]["status"] = "Concordant"
+    serotype["report"]['Enterobase_serotype1'] = results["Enterobase_serotype1"]
+    serotype["report"]['Enterobase_count1'] = results["Enterobase_count1"]
+    serotype["report"]['Enterobase_serotype2'] = results["Enterobase_serotype2"]
+    serotype["report"]['Enterobase_count2'] = results["Enterobase_count2"]
 
-    serotype["summary"]["serotype"] = results["Enterobase_serotype1"]
 
 
 def datadump(samplecomponent_ref_json: Dict):
@@ -36,6 +46,7 @@ def datadump(samplecomponent_ref_json: Dict):
             "summary": {
                 "serotype": "",
                 "antigenic profile": "",
+                "status": "",
             },
             "report": {}
         })

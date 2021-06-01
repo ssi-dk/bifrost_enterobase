@@ -91,7 +91,7 @@ rule run_enterobase:
         _file = f"{component['name']}/serotype.txt"
     shell:
         "/bifrost/components/bifrost_enterobase/bifrost_enterobase/EnteroLookup.py {} 1> {}".format(
-            sample['categories']['mlst']['summary']['sequence_type'][0]['senterica'],
+            sample['categories']['mlst']['summary']['sequence_type']['senterica'],
             f"{component['name']}/serotype.txt")
 
 #* Dynamic section: end ****************************************************************************
