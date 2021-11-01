@@ -64,7 +64,7 @@ def load_json_file(stfile):
 	return serotypes
 
 def get_serotype_from_file(ST, stfile):
-	#try:
+	try:
 		cache = load_json_file(stfile)
 		serotypes = sorted(cache[str(ST)].items(), key=lambda element: element[1], reverse=True)
 		if serotypes[0][1] / serotypes[1][1] < 2 or serotypes[0][1] < 3:
@@ -76,7 +76,7 @@ def get_serotype_from_file(ST, stfile):
 			except IndexError:
 				result.extend(("Not found", "0"))
 		return result
-	#except Exception:
+	except Exception:
 		return None
 	
 
