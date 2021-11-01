@@ -86,13 +86,15 @@ rule run_enterobase:
     benchmark:
         f"{component['name']}/benchmarks/{rule_name}.benchmark"
     input:
-        rules.check_requirements.output.check_file
+        rules.check_requirements.output.check_file,
+        serotypes = f"/bifrost/components/bifrost_enterobase/resources/2021_10_25_serov.json"
+    params:
+        mlst = sample['categories']['mlst']['summary']['sequence_type']['senterica'],
+        scriptfile = f"/bifrost/components/bifrost_enterobase/bifrost_enterobase/EnteroLookup.py"
     output:
         _file = f"{component['name']}/serotype.txt"
     shell:
-        "/bifrost/components/bifrost_enterobase/bifrost_enterobase/EnteroLookup.py {} 1> {}".format(
-            sample['categories']['mlst']['summary']['sequence_type']['senterica'],
-            f"{component['name']}/serotype.txt")
+        "{params.scriptfile} {params.mlst} --stfile {input.serotypes} 1> {output._file}"
 
 #* Dynamic section: end ****************************************************************************
 

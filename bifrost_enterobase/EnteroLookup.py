@@ -11,12 +11,14 @@ import sys
 #import json
 import time
 from yaml import safe_load
+from pprint import pprint
 
 def get_args():
 	parser = argparse.ArgumentParser(
 		description='')
 	parser.add_argument("ST", help="ST to lookup in enterobase")
 	parser.add_argument("--id", help= "Add this if you want strain ID in output", default="NA" )
+	parser.add_argument("--stfile", help= "Yaml file with serotype counts pr ST")
 	return parser.parse_args()
 
 def get_token(address):
@@ -47,13 +49,43 @@ def get_serotype(token, ST):
 			result.extend(("Not found", "0"))
 	return result
 
-if __name__ == "__main__":
-	args = get_args()
+def get_serotype_from_enterobase(ST):
 	ENTEROBASE_USERNAME = os.environ.get('ENTEROBASE_USERNAME')
 	ENTEROBASE_PASSWORD = os.environ.get('ENTEROBASE_PASSWORD')
 	ENTEROBASE_SERVER = os.environ.get('ENTEROBASE_SERVER')
 
 	address = '%s/api/v2.0/login?username=%s&password=%s' %(ENTEROBASE_SERVER, ENTEROBASE_USERNAME, ENTEROBASE_PASSWORD)
 	token = get_token(address)
-	result = get_serotype(token, args.ST)
+	result = get_serotype(token, ST)
+	return result
+
+def load_json_file(stfile):
+	serotypes = safe_load(open(stfile))
+	return serotypes
+
+def get_serotype_from_file(ST, stfile):
+	#try:
+		cache = load_json_file(stfile)
+		serotypes = sorted(cache[str(ST)].items(), key=lambda element: element[1], reverse=True)
+		if serotypes[0][1] / serotypes[1][1] < 2 or serotypes[0][1] < 3:
+			return None
+		result = []
+		for i in range(2):
+			try:
+				result.extend(map(str, serotypes[i]))
+			except IndexError:
+				result.extend(("Not found", "0"))
+		return result
+	#except Exception:
+		return None
+	
+
+if __name__ == "__main__":
+	args = get_args()
+	result = None
+	if args.stfile:
+		result = get_serotype_from_file(args.ST, args.stfile)
+	if result is None:
+		result = get_serotype_from_enterobase(args.ST)
 	print(f"{args.id}\t{args.ST}"+"\t"+"\t".join(result))
+
