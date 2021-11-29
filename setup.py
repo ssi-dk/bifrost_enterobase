@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='bifrost_enterobase',
-    version='v1_1_1__',
+    version='v1_1_2__',
     description='Enterobase component for salmonella serotyping',
     url='https://github.com/ssi-dk/bifrost_enterobase',
     author="Kristoffer Kiil",
