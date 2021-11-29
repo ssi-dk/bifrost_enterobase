@@ -63,22 +63,27 @@ def load_json_file(stfile):
 	serotypes = safe_load(open(stfile))
 	return serotypes
 
+def data_reliable(serotypes):
+	most_abundant_count = int(serotypes[1])
+	second_most_abundant_count = int(serotypes[3])
+	if most_abundant_count > 3 and most_abundant_count > 2 * second_most_abundant_count:
+		return True
+	else:
+		return False
+
 def get_serotype_from_file(ST, stfile):
-	try:
-		cache = load_json_file(stfile)
-		serotypes = sorted(cache[str(ST)].items(), key=lambda element: element[1], reverse=True)
-		if serotypes[0][1] / serotypes[1][1] < 2 or serotypes[0][1] < 3:
-			return None
-		result = []
-		for i in range(2):
-			try:
-				result.extend(map(str, serotypes[i]))
-			except IndexError:
-				result.extend(("Not found", "0"))
+	cache = load_json_file(stfile)
+	serotypes = sorted(cache[str(ST)].items(), key=lambda element: element[1], reverse=True)
+	result = []
+	for i in range(2):
+		try:
+			result.extend(map(str, serotypes[i]))
+		except IndexError:
+			result.extend(("Not found", "0"))
+	if data_reliable(result):
 		return result
-	except Exception:
+	else:
 		return None
-	
 
 if __name__ == "__main__":
 	args = get_args()
@@ -88,4 +93,3 @@ if __name__ == "__main__":
 	if result is None:
 		result = get_serotype_from_enterobase(args.ST)
 	print(f"{args.id}\t{args.ST}"+"\t"+"\t".join(result))
-
