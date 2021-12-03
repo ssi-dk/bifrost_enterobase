@@ -14,21 +14,21 @@ def extract_serotype_results(serotype: Category, results: Dict, component_name: 
 
     for line in open(file_path,'r'):
         (ID, ST, serotype1, count1, serotype2, count2) = line.strip().split("\t")
-    results['Enterobase_serotype1'] = serotype1
-    results['Enterobase_count1'] = count1
-    results['Enterobase_serotype2'] = serotype2
-    results['Enterobase_count2'] = count2
+    results['enterobase_serotype1'] = serotype1
+    results['enterobase_count1'] = count1
+    results['enterobase_serotype2'] = serotype2
+    results['enterobase_count2'] = count2
     if serotype["summary"]["serotype"] == '':
-        serotype["summary"]["serotype"] = results["Enterobase_serotype1"]
-    elif serotype["summary"]["serotype"] != results["Enterobase_serotype1"]:
-        serotype["summary"]["serotype"] = results["Enterobase_serotype1"]
+        serotype["summary"]["serotype"] = results["enterobase_serotype1"]
+    elif serotype["summary"]["serotype"] != results["enterobase_serotype1"]:
+        serotype["summary"]["serotype"] = results["enterobase_serotype1"]
         serotype["summary"]["status"] = "Ambiguous"
-    elif serotype["summary"]["serotype"] == results["Enterobase_serotype1"] and serotype["summary"]["status"] != "Ambiguous":
+    elif serotype["summary"]["serotype"] == results["enterobase_serotype1"] and serotype["summary"]["status"] != "Ambiguous":
         serotype["summary"]["status"] = "Concordant"
-    serotype["report"]['Enterobase_serotype1'] = results["Enterobase_serotype1"]
-    serotype["report"]['Enterobase_count1'] = results["Enterobase_count1"]
-    serotype["report"]['Enterobase_serotype2'] = results["Enterobase_serotype2"]
-    serotype["report"]['Enterobase_count2'] = results["Enterobase_count2"]
+    serotype["report"]['enterobase_serotype1'] = results["enterobase_serotype1"]
+    serotype["report"]['enterobase_count1'] = results["enterobase_count1"]
+    serotype["report"]['enterobase_serotype2'] = results["enterobase_serotype2"]
+    serotype["report"]['enterobase_count2'] = results["enterobase_count2"]
 
 
 
