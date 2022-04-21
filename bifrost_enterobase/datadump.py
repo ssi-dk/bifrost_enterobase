@@ -38,7 +38,7 @@ def datadump(samplecomponent_ref_json: Dict):
     sample = Sample.load(samplecomponent.sample)
     component = Component.load(samplecomponent.component)
     
-    serotype = samplecomponent.get_category("serotype")
+    serotype = sample.get_category("serotype")
     if serotype is None:
         serotype = Category(value={
             "name": "serotype",
