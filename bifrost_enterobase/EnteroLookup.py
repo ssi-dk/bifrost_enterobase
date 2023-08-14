@@ -20,10 +20,7 @@ def get_args():
 
 def get_token(address):
     response = safe_load(subprocess.check_output(["curl", address]))
-    if "api_token" in response:
-        token = response["api_token"]
-    else:
-        token = "eyJhbGciOiJIUzI1NiIsImV4cCI6MTU0MDkyMzQ4MywiaWF0IjoxNTI1MTU1NDgzfQ.eyJ1c2VybmFtZSI6Ik1hb3MiLCJjaXR5IjoiQ29wZW5oYWdlbiIsImNvbmZpcm1lZCI6MSwiYWxsb3dlZF9zY2hlbWVzIjoiY2dNTFNUX3YyIiwiZmlyc3RuYW1lIjoiTWFyayIsImFwaV9hY2Nlc3Nfc2VudGVyaWNhIjoiVHJ1ZSIsImNvdW50cnkiOiJEZW5tYXJrIiwiaWQiOjEzMzAsImFkbWluaXN0cmF0b3IiOm51bGwsImVtYWlsIjoibWFvc0Bzc2kuZGsiLCJkZXBhcnRtZW50IjoiRm9vZGJvcm5lIHBhdGhvZ2VuIHN1cnZlaWxsYW5jZSIsInZpZXdfc3BlY2llcyI6IlRydWUiLCJsYXN0bmFtZSI6Ik9lc3Rlcmx1bmQiLCJhY3RpdmUiOm51bGwsInVwbG9hZF9yZWFkcyI6IlRydWUiLCJpbnN0aXR1dGlvbiI6IlN0YXRlbnMgU2VydW0gSW5zdGl0dXQifQ.qSAkPS_oyjL1vyqXzQBmXwc3zvrGS-r8KGP-OHIeynw"
+    token = response["api_token"]
     return token
 
 
