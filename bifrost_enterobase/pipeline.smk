@@ -36,6 +36,12 @@ onerror:
     if samplecomponent['status'] == "Running":
         common.set_status_and_save(sample, samplecomponent, "Failure")
 
+
+envvars:
+    "BIFROST_INSTALL_DIR",
+    "CONDA_PREFIX"
+
+
 rule all:
     input:
         # file is defined by datadump function
@@ -87,10 +93,12 @@ rule run_enterobase:
         f"{component['name']}/benchmarks/{rule_name}.benchmark"
     input:
         rules.check_requirements.output.check_file,
-        serotypes = f"/bifrost/components/bifrost_enterobase/resources/2021_10_25_serov.json"
+        serotypes = f"{os.environ['BIFROST_INSTALL_DIR']}/bifrost/components/bifrost_{component['display_name']}/{component['resources']['serotypes_json']}"
+        #serotypes = f"/bifrost/components/bifrost_enterobase/resources/2021_10_25_serov.json"
     params:
         mlst = sample['categories']['mlst']['summary']['sequence_type']['senterica'],
-        scriptfile = f"/bifrost/components/bifrost_enterobase/bifrost_enterobase/EnteroLookup.py"
+        scriptfile = f"{os.environ['BIFROST_INSTALL_DIR']}/bifrost/components/bifrost_{component['display_name']}/bifrost_{component['display_name']}/EnteroLookup.py"
+        #scriptfile = f"/bifrost/components/bifrost_enterobase/bifrost_enterobase/EnteroLookup.py"
     output:
         _file = f"{component['name']}/serotype.txt"
     shell:
