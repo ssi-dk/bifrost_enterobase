@@ -17,7 +17,7 @@ def test_connection():
     assert "TEST" in os.environ['BIFROST_DB_KEY'].upper()  # A very basic piece of protection ensuring the word test is in the DB
 
 class TestBifrostEnterobase:
-    component_name = "enterobase__v1.1.5"
+    component_name = "enterobase__v1.1.6"
     bifrost_install_dir = Path(os.environ['BIFROST_INSTALL_DIR'])
     bifrost_config_and_data_path = Path(f"{bifrost_install_dir}/bifrost/test_data")
     current_dir = os.getcwd()
