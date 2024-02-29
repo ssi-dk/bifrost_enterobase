@@ -38,7 +38,10 @@ def get_serotype(token, ST):
 		wait *= 2
 		response = subprocess.check_output(cmd).decode()
 	response = safe_load(response)
-	serotypes = response["STs"][0]['info']['predict']['serotype']
+	try:
+		serotypes = response["STs"][0]['info']['predict']['serotype']
+	except (IndexError, KeyError):
+		serotypes = []
 	result = []
 	for i in range(2):
 		try:
@@ -46,6 +49,7 @@ def get_serotype(token, ST):
 		except IndexError:
 			result.extend(("Not found", "0"))
 	return result
+
 
 if __name__ == "__main__":
 	args = get_args()
