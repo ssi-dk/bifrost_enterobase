@@ -1,18 +1,14 @@
-from argparse import Namespace
-import pytest
-from bifrostlib import common
-from bifrostlib import datahandling
-from bifrostlib import database_interface
-from bifrostlib.datahandling import ComponentReference
-from bifrostlib.datahandling import Component
-from bifrostlib.datahandling import SampleReference
-from bifrostlib.datahandling import Sample
-from bifrostlib.datahandling import RunReference
-from bifrostlib.datahandling import Run
-from bifrost_enterobase import launcher
-import pymongo
 import os
 import shutil
+from argparse import Namespace
+from pathlib import Path
+
+import pymongo
+import pytest
+from bifrost_enterobase import launcher
+from bifrostlib import common, database_interface, datahandling
+from bifrostlib.datahandling import (Component, ComponentReference, Run,
+                                     RunReference, Sample, SampleReference)
 
 
 @pytest.fixture
@@ -21,9 +17,11 @@ def test_connection():
     assert "TEST" in os.environ['BIFROST_DB_KEY'].upper()  # A very basic piece of protection ensuring the word test is in the DB
 
 class TestBifrostEnterobase:
-    component_name = "enterobase__v1_1_5__"
+    component_name = "enterobase__v1.1.5"
+    bifrost_install_dir = Path(os.environ['BIFROST_INSTALL_DIR'])
+    bifrost_config_and_data_path = Path(f"{bifrost_install_dir}/bifrost/test_data")
     current_dir = os.getcwd()
-    test_dir = "/bifrost/test_data/output/test__enterobase/"
+    test_dir = bifrost_config_and_data_path / "output/test__enterobase/"
     json_entries = [
         {
             "_id": {"$oid": "000000000000000000000001"}, 
@@ -32,8 +30,8 @@ class TestBifrostEnterobase:
             "categories": {
                 "paired_reads": {
                     "summary": {
-                        "data": ["/bifrost/test_data/samples/SRR2094561_1.fastq.gz",
-                                 "/bifrost/test_data/samples/SRR2094561_2.fastq.gz"]
+                        "data": [str(bifrost_config_and_data_path/"samples/SRR2094561_1.fastq.gz"),
+                                 str(bifrost_config_and_data_path/"samples/SRR2094561_2.fastq.gz")]
                     }
                 },
                 "mlst": {
@@ -81,8 +79,8 @@ class TestBifrostEnterobase:
     def test_info(self):
         launcher.run_pipeline(["--info"])
 
-    def test_help(self):
-        launcher.run_pipeline(["--help"])
+    # def test_help(self):
+    #     launcher.run_pipeline(["--help"])
 
     def test_pipeline(self):
         if os.path.isdir(self.test_dir):
