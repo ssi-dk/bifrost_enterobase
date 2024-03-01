@@ -31,8 +31,7 @@ category: [serotype]
 
 #-Required resource files---------------------------------------------------------------------------
 resources:
-  serotypes: "resources/2021_10_25_serov.json"
-#  adapters_fasta: "/bifrost/components/bifrost_min_read_check/resources/adapters.fasta"
+  serotypes_json: "resources/2021_10_25_serov.json"
 #---------------------------------------------------------------------------------------------------
 
 #-Requirements to run component---------------------------------------------------------------------

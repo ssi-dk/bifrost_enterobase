@@ -92,7 +92,7 @@ rule run_enterobase:
         f"{component['name']}/benchmarks/{rule_name}.benchmark"
     input:
         rules.check_requirements.output.check_file,
-        serotypes = f"{resources_dir}/{component['resources']['serotypes']}"
+        serotypes = f"{resources_dir}/{component['resources']['serotypes_json']}"
     params:
         mlst = sample['categories']['mlst']['summary']['sequence_type']['senterica'],
     output:
