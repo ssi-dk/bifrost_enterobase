@@ -36,9 +36,14 @@ onerror:
     if samplecomponent['status'] == "Running":
         common.set_status_and_save(sample, samplecomponent, "Failure")
 
+envvars:
+    "BIFROST_INSTALL_DIR",
+    "CONDA_PREFIX"
+
+resources_dir=f"{os.environ['BIFROST_INSTALL_DIR']}/bifrost/components/bifrost_{component['display_name']}"
+
 rule all:
     input:
-        # file is defined by datadump function
         f"{component['name']}/datadump_complete"
     run:
         common.set_status_and_save(sample, samplecomponent, "Success")
@@ -87,14 +92,13 @@ rule run_enterobase:
         f"{component['name']}/benchmarks/{rule_name}.benchmark"
     input:
         rules.check_requirements.output.check_file,
-        serotypes = f"/bifrost/components/bifrost_enterobase/resources/2021_10_25_serov.json"
+        serotypes = f"{resources_dir}/{component['resources']['serotypes']}"
     params:
         mlst = sample['categories']['mlst']['summary']['sequence_type']['senterica'],
-        scriptfile = f"/bifrost/components/bifrost_enterobase/bifrost_enterobase/EnteroLookup.py"
     output:
         _file = f"{component['name']}/serotype.txt"
     shell:
-        "{params.scriptfile} {params.mlst} --stfile {input.serotypes} 1> {output._file}"
+        os.path.join(os.path.dirname(workflow.snakefile),"EnteroLookup.py") + " {params.mlst} --stfile {input.serotypes} 1> {output._file}"
 
 #* Dynamic section: end ****************************************************************************
 
@@ -110,7 +114,7 @@ rule datadump:
         f"{component['name']}/benchmarks/{rule_name}.benchmark"
     input:
         #* Dynamic section: start ******************************************************************
-        rules.run_enterobase.output._file  # Needs to be output of final rule
+        _file = rules.run_enterobase.output._file  # Needs to be output of final rule
         #* Dynamic section: end ********************************************************************
     output:
         complete = rules.all.input

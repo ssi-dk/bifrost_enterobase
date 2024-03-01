@@ -7,12 +7,12 @@ from bifrostlib.datahandling import Category
 from typing import Dict
 import os
 
-def extract_serotype_results(serotype: Category, results: Dict, component_name: str) -> None:
-    file_name = "serotype.txt"
-    file_key = common.json_key_cleaner(file_name)
-    file_path = os.path.join(component_name, file_name)
+def extract_serotype_results(serotype: Category, 
+                             results: Dict, 
+                             component_name: str, 
+                             file_name:str) -> None:
 
-    for line in open(file_path,'r'):
+    for line in open(file_name, 'r'):
         (ID, ST, serotype1, count1, serotype2, count2) = line.strip().split("\t")
     results['enterobase_serotype1'] = serotype1
     results['enterobase_count1'] = count1
@@ -32,7 +32,7 @@ def extract_serotype_results(serotype: Category, results: Dict, component_name: 
 
 
 
-def datadump(samplecomponent_ref_json: Dict):
+def datadump(input: object, output: object, samplecomponent_ref_json: Dict):
     samplecomponent_ref = SampleComponentReference(value=samplecomponent_ref_json)
     samplecomponent = SampleComponent.load(samplecomponent_ref)
     sample = Sample.load(samplecomponent.sample)
@@ -50,7 +50,11 @@ def datadump(samplecomponent_ref_json: Dict):
             },
             "report": {}
         })
-    extract_serotype_results(serotype, samplecomponent["results"], samplecomponent["component"]["name"])
+    extract_serotype_results(
+        serotype,
+        samplecomponent["results"], 
+        samplecomponent["component"]["name"],
+        input._file)
     samplecomponent.set_category(serotype)
     sample.set_category(serotype)
     samplecomponent.save_files()
@@ -60,5 +64,7 @@ def datadump(samplecomponent_ref_json: Dict):
 
 
 datadump(
-    snakemake.params.samplecomponent_ref_json,
+    snakemake.input,
+    snakemake.output,
+    snakemake.params.samplecomponent_ref_json
 )

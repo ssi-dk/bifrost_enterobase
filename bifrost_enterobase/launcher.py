@@ -94,7 +94,6 @@ def parse_and_run(args: List[str]) -> None:
         action='store_true',
         help='Provides basic information on COMPONENT'
     )
-
     #Second parser for the arguements related to the program, everything can be set to defaults (or has defaults)
     parser: argparse.ArgumentParser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument(
@@ -123,6 +122,7 @@ def parse_and_run(args: List[str]) -> None:
 
     try:
         basic_options, extras = basic_parser.parse_known_args(args)
+        print(basic_options)
         if basic_options.reinstall:
             install_component()
             return None
@@ -136,7 +136,7 @@ def parse_and_run(args: List[str]) -> None:
             run_pipeline(pipeline_options)
     except Exception as e:
         print(traceback.format_exc, file=sys.stderr)
-
+        raise
 
 def show_info() -> None:
     pprint.pprint(COMPONENT.json)
@@ -160,6 +160,7 @@ def run_pipeline(args: argparse.Namespace) -> None:
         process.communicate()
     except:
         print(traceback.format_exc())
+        raise
 
 
 def main(args = sys.argv):

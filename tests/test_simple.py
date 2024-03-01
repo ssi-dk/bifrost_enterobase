@@ -19,9 +19,9 @@ def test_connection():
 class TestBifrostEnterobase:
     component_name = "enterobase__v1.1.6"
     bifrost_install_dir = Path(os.environ['BIFROST_INSTALL_DIR'])
-    bifrost_config_and_data_path = Path(f"{bifrost_install_dir}/bifrost/test_data")
+    bifrost_config_and_data_path = bifrost_install_dir/"bifrost/test_data"
     current_dir = os.getcwd()
-    test_dir = bifrost_config_and_data_path / "output/test__enterobase/"
+    test_dir = bifrost_config_and_data_path/"output/test__enterobase/"
     json_entries = [
         {
             "_id": {"$oid": "000000000000000000000001"}, 
@@ -65,7 +65,7 @@ class TestBifrostEnterobase:
     def teardown_class(cls):
         client = pymongo.MongoClient(os.environ['BIFROST_DB_KEY'])
         db = client.get_database()
-        cls.clear_all_collections(db)
+        #cls.clear_all_collections(db)
 
     @staticmethod
     def clear_all_collections(db):
@@ -77,23 +77,25 @@ class TestBifrostEnterobase:
         db.drop_collection("samples")
 
     def test_info(self):
-        launcher.run_pipeline(["--info"])
+        launcher.parse_and_run(["--info"])
 
-    # def test_help(self):
-    #     launcher.run_pipeline(["--help"])
+    def test_help(self):
+        with pytest.raises(SystemExit):
+            launcher.parse_and_run(["--help"])
 
     def test_pipeline(self):
+        print(self.test_dir)
         if os.path.isdir(self.test_dir):
             shutil.rmtree(self.test_dir)
 
         os.mkdir(self.test_dir)
         test_args = [
             "--sample_name", "SRR2094561",
-            "--outdir", self.test_dir
+            "--outdir", str(self.test_dir)
         ]
         launcher.main(args=test_args)
-        assert os.path.isfile(f"{self.test_dir}/{self.component_name}/datadump_complete")
-        shutil.rmtree(self.test_dir)
-        assert not os.path.isdir(f"{self.test_dir}/{self.component_name}")
+        assert (self.test_dir/self.component_name/"datadump_complete").exists()
+        #shutil.rmtree(self.test_dir)
+        #assert not os.path.isdir(f"{self.test_dir}/{self.component_name}")
 
 
