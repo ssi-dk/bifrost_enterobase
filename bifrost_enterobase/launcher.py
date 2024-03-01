@@ -97,7 +97,6 @@ def parse_and_run(args: List[str]) -> None:
         action='store_true',
         help='Show arg values'
     )
-    parser.add_argument("--debug", action="store_true", help="Show arg values")
     parser.add_argument(
         "-out",
         "--outdir",

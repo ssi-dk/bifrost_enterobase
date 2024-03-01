@@ -27,10 +27,10 @@ def extract_serotype_results(serotype: Category,
         and serotype["summary"]["status"] != "Ambiguous"
     ):
         serotype["summary"]["status"] = "Concordant"
-    serotype["report"]['enterobase_serotype1'] = results["enterobase_serotype1"]
-    serotype["report"]['enterobase_count1'] = results["enterobase_count1"]
-    serotype["report"]['enterobase_serotype2'] = results["enterobase_serotype2"]
-    serotype["report"]['enterobase_count2'] = results["enterobase_count2"]
+    serotype["report"]["enterobase_serotype1"] = results["enterobase_serotype1"]
+    serotype["report"]["enterobase_count1"] = results["enterobase_count1"]
+    serotype["report"]["enterobase_serotype2"] = results["enterobase_serotype2"]
+    serotype["report"]["enterobase_count2"] = results["enterobase_count2"]
 
 
 def datadump(input: object, output: object, samplecomponent_ref_json: Dict):
