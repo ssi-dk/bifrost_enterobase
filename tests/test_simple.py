@@ -26,7 +26,7 @@ def test_cwd():
 
 
 class TestBifrostEnterobase:
-    component_name = "enterobase__v1.1.7"
+    component_name = "enterobase__v1.1.8"
     bifrost_install_dir = Path(os.environ['BIFROST_INSTALL_DIR'])
     bifrost_config_and_data_path = bifrost_install_dir/"bifrost/test_data"
     current_dir = os.getcwd()
