@@ -30,6 +30,10 @@ except Exception as error:
     print(traceback.format_exc(), file=sys.stderr)
     raise Exception("failed to set sample, component and/or samplecomponent")
 
+try:
+    mlst = sample['categories']['mlst']['summary']['sequence_type']['senterica']
+except KeyError:
+    mlst = ""
 onerror:
     if not samplecomponent.has_requirements():
         common.set_status_and_save(sample, samplecomponent, "Requirements not met")
@@ -94,7 +98,7 @@ rule run_enterobase:
         rules.check_requirements.output.check_file,
         serotypes = f"{resources_dir}/{component['resources']['serotypes_json']}"
     params:
-        mlst = sample['categories']['mlst']['summary']['sequence_type']['senterica'],
+        mlst = str(mlst),
     output:
         _file = f"{component['name']}/serotype.txt"
     shell:
