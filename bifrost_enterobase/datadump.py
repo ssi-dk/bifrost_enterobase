@@ -55,7 +55,7 @@ def datadump(input: object, output: object, samplecomponent_ref_json: Dict):
         serotype,
         samplecomponent["results"], 
         samplecomponent["component"]["name"],
-        input._file)
+        input.serotype_file)
     samplecomponent.set_category(serotype)
     sample.set_category(serotype)
     samplecomponent.save_files()

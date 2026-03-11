@@ -10,23 +10,36 @@ from bifrostlib.datahandling import ComponentReference
 from bifrostlib.datahandling import Component
 from bifrostlib.datahandling import SampleComponentReference
 from bifrostlib.datahandling import SampleComponent
+
+import datetime
+
 os.umask(0o2)
 
 try:
     sample_ref = SampleReference(_id=config.get('sample_id', None), name=config.get('sample_name', None))
-    sample:Sample = Sample.load(sample_ref) # schema 2.1
+    sample: Sample = Sample.load(sample_ref)
     if sample is None:
         raise Exception("invalid sample passed")
+
     component_ref = ComponentReference(name=config['component_name'])
-    component:Component = Component.load(reference=component_ref) # schema 2.1
+    component: Component = Component.load(reference=component_ref)
     if component is None:
         raise Exception("invalid component passed")
-    samplecomponent_ref = SampleComponentReference(name=SampleComponentReference.name_generator(sample.to_reference(), component.to_reference()))
+
+    samplecomponent_ref = SampleComponentReference(
+        name=SampleComponentReference.name_generator(sample.to_reference(), component.to_reference())
+    )
     samplecomponent = SampleComponent.load(samplecomponent_ref)
     if samplecomponent is None:
-        samplecomponent:SampleComponent = SampleComponent(sample_reference=sample.to_reference(), component_reference=component.to_reference()) # schema 2.1
+        samplecomponent = SampleComponent(
+            sample_reference=sample.to_reference(),
+            component_reference=component.to_reference()
+        )
+
+    # Only set status here
     common.set_status_and_save(sample, samplecomponent, "Running")
-except Exception as error:
+
+except Exception:
     print(traceback.format_exc(), file=sys.stderr)
     raise Exception("failed to set sample, component and/or samplecomponent")
 
@@ -46,21 +59,34 @@ envvars:
 
 resources_dir=f"{os.environ['BIFROST_INSTALL_DIR']}/bifrost/components/bifrost_{component['display_name']}"
 
+
+# -------------------------------------------------------------------------
+# MAIN + TIMING
+# -------------------------------------------------------------------------
+
+
 rule all:
     input:
         f"{component['name']}/datadump_complete"
     run:
         common.set_status_and_save(sample, samplecomponent, "Success")
 
-rule setup:
+rule set_time_start:
     output:
-        init_file = touch(temp(f"{component['name']}/initialized")),
-    params:
-        folder = component['name']
+        start_file = f"{component['name']}/time_start.txt"
     run:
-        samplecomponent['path'] = os.path.join(os.getcwd(), component['name'])
-        samplecomponent.save()
+        import time
+        with open(output.start_file, "w") as fh:
+            fh.write(str(time.time()))
 
+rule setup:
+    input:
+        rules.set_time_start.output.start_file
+    output:
+        init_file = touch(f"{component['name']}/initialized")
+    run:
+        samplecomponent["path"] = os.path.join(os.getcwd(), component["name"])
+        samplecomponent.save()
 
 rule_name = "check_requirements"
 rule check_requirements:
@@ -72,15 +98,14 @@ rule check_requirements:
     benchmark:
         f"{component['name']}/benchmarks/{rule_name}.benchmark"
     input:
-        folder = rules.setup.output.init_file,
+        folder = rules.setup.output.init_file
     output:
-        check_file = f"{component['name']}/requirements_met",
-    params:
-        samplecomponent
+        check_file = touch(f"{component['name']}/requirements_met")
     run:
         if samplecomponent.has_requirements():
-            with open(output.check_file, "w") as fh:
-                fh.write("")
+            #No need to write anything as the output is using touch to create the flag used to check the requirements
+            pass
+
 
 #- Templated section: end --------------------------------------------------------------------------
 
@@ -100,11 +125,50 @@ rule run_enterobase:
     params:
         mlst = str(mlst),
     output:
-        _file = f"{component['name']}/serotype.txt"
+        serotype_file = f"{component['name']}/serotype.txt"
     shell:
-        os.path.join(os.path.dirname(workflow.snakefile),"EnteroLookup.py") + " {params.mlst} --stfile {input.serotypes} 1> {output._file}"
+        os.path.join(os.path.dirname(workflow.snakefile),"EnteroLookup.py") + " {params.mlst} --stfile {input.serotypes} 1> {output.serotype_file}"
 
 #* Dynamic section: end ****************************************************************************
+
+# -------------------------------------------------------------------------
+# END TIME + RUNTIME (FILE-BASED)
+# -------------------------------------------------------------------------
+
+rule set_time_end:
+    input:
+        rules.run_enterobase.output.serotype_file
+    output:
+        end_file = f"{component['name']}/time_end.txt"
+    run:
+        import time
+        with open(output.end_file, "w") as fh:
+            fh.write(str(time.time()))
+
+rule dump_info:
+    input:
+        start_file = rules.set_time_start.output.start_file,
+        end_file = rules.set_time_end.output.end_file,
+    output:
+        runtime_flag = touch(f"{component['name']}/runtime_set")
+    run:
+        import time
+        from bifrostlib.datahandling import SampleComponent
+
+        with open(input.start_file) as fh:
+            t_start = float(fh.read().strip())
+        with open(input.end_file) as fh:
+            t_end = float(fh.read().strip())
+	
+        runtime_minutes = (t_end - t_start) / 60.0
+        print(f"runtime in minutes {runtime_minutes}")
+
+        sc = SampleComponent.load(samplecomponent.to_reference())
+        sc["time_start"] = datetime.datetime.fromtimestamp(t_start).strftime("%Y-%m-%d %H:%M:%S")
+        sc["time_end"] = datetime.datetime.fromtimestamp(t_end).strftime("%Y-%m-%d %H:%M:%S")
+        sc["time_running"] = round(runtime_minutes, 3)
+	
+        sc.save()
 
 #- Templated section: start ------------------------------------------------------------------------
 rule_name = "datadump"
@@ -118,7 +182,8 @@ rule datadump:
         f"{component['name']}/benchmarks/{rule_name}.benchmark"
     input:
         #* Dynamic section: start ******************************************************************
-        _file = rules.run_enterobase.output._file  # Needs to be output of final rule
+        rules.dump_info.output.runtime_flag,
+        serotype_file = rules.run_enterobase.output.serotype_file  # Needs to be output of final rule
         #* Dynamic section: end ********************************************************************
     output:
         complete = rules.all.input
