@@ -3,7 +3,8 @@ channels:
   - bioconda
   - defaults
 dependencies:
-  - snakemake-minimal==8.4.11
+  - snakemake-minimal
+  - python>=3.13
   - curl
   - pip
   - pip:
@@ -15,5 +16,5 @@ dependencies:
     - pyyaml
     - argh
     - watchdog
-    - bifrostlib
+    - bifrostlib>=2.1.20
     - -e .
