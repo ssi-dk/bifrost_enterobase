@@ -4,38 +4,15 @@ from bifrostlib.datahandling import SampleComponentReference
 from bifrostlib.datahandling import SampleComponent
 from bifrostlib.datahandling import Category
 from typing import Dict
+from pprint import pprint
 import os
 
 
-def ensure_tool_category(samplecomponent, category_name: str) -> Category:
-    category = samplecomponent.get_category(category_name)
-    if category is None:
-        category = Category(value={
-            "name": category_name,
-            "component": samplecomponent.component,
-            "summary": {
-                "serotype": "",
-                "antigenic_profile": "",
-                "status": "",
-            },
-            "report": {},
-        })
-
-    if "summary" not in category:
-        category["summary"] = {}
-    if "report" not in category:
-        category["report"] = {}
-
-    category["summary"].setdefault("serotype", "")
-    category["summary"].setdefault("antigenic_profile", "")
-    category["summary"].setdefault("status", "")
-
-    return category
-
-
-def ensure_final_serotype_category(sample) -> Category:
+def ensure_serotype_category(sample) -> Category:
     serotype = sample.get_category("serotype")
+    pprint(serotype)
     if serotype is None:
+        print("Creating new category(serotype)")
         serotype = Category(value={
             "name": "serotype",
             "component": {
@@ -52,6 +29,7 @@ def ensure_final_serotype_category(sample) -> Category:
     if "summary" not in serotype:
         serotype["summary"] = {}
     if "report" not in serotype:
+        print("No report found - recreating")
         serotype["report"] = {}
 
     serotype["summary"].setdefault("serotype", "")
@@ -59,10 +37,6 @@ def ensure_final_serotype_category(sample) -> Category:
     serotype["summary"].setdefault("status", "")
 
     return serotype
-
-
-def find_category_by_name(obj, category_name: str):
-    return obj.get_category(category_name)
 
 
 def update_consensus_field(summary: dict, field: str, value: str) -> bool:
@@ -88,51 +62,20 @@ def update_consensus_field(summary: dict, field: str, value: str) -> bool:
     return True
 
 
-def update_consensus_summary(serotype: Category, tool_serotype: str) -> None:
+def update_consensus_summary(serotype: Category, tool_serotype: str, tool_antigenic_profile: str) -> None:
     summary = serotype["summary"]
     previous_status = summary.get("status", "")
 
     serotype_conflict = update_consensus_field(summary, "serotype", tool_serotype)
+    antigenic_conflict = update_consensus_field(summary, "antigenic_profile", tool_antigenic_profile)
 
-
-    if serotype_conflict:
+    if serotype_conflict or antigenic_conflict:
         summary["status"] = "Ambiguous"
     elif previous_status != "Ambiguous":
         has_serotype = summary.get("serotype", "").strip() != ""
-
-        if has_serotype:
+        has_antigenic = summary.get("antigenic_profile", "").strip() != ""
+        if has_serotype or has_antigenic:
             summary["status"] = "Concordant"
-
-
-def merge_tool_into_final(final_serotype: Category, tool_category) -> None:
-    if tool_category is None:
-        return
-
-    tool_summary = tool_category["summary"]
-    tool_report = tool_category["report"]
-
-    update_consensus_summary(
-        final_serotype,
-        tool_summary.get("serotype", ""),
-
-    )
-
-    final_serotype["report"].update(tool_report)
-
-
-def rebuild_final_serotype(sample) -> None:
-    final_serotype = ensure_final_serotype_category(sample)
-
-    final_serotype["summary"]["serotype"] = ""
-    final_serotype["summary"]["antigenic_profile"] = ""
-    final_serotype["summary"]["status"] = ""
-    final_serotype["report"] = {}
-
-    merge_tool_into_final(final_serotype, find_category_by_name(sample, "enterobase_serotype"))
-    merge_tool_into_final(final_serotype, find_category_by_name(sample, "sistr_serotype"))
-    merge_tool_into_final(final_serotype, find_category_by_name(sample, "seqsero_serotype"))
-
-    sample.set_category(final_serotype)
 
 
 def parse_enterobase_results(results: Dict, file_name: str) -> Dict:
@@ -169,32 +112,30 @@ def parse_enterobase_results(results: Dict, file_name: str) -> Dict:
 def datadump(input: object, output: object, samplecomponent_ref_json: Dict):
     samplecomponent_ref = SampleComponentReference(value=samplecomponent_ref_json)
     samplecomponent = SampleComponent.load(samplecomponent_ref)
-    sample = Sample.load(samplecomponent.sample)
 
     parsed = parse_enterobase_results(
         samplecomponent["results"],
         input.serotype_file,
     )
 
-    enterobase_category = ensure_tool_category(samplecomponent, "enterobase_serotype")
+    fresh_sample = Sample.load(samplecomponent.sample)
+    fresh_serotype = ensure_serotype_category(fresh_sample)
 
-    enterobase_category["summary"]["serotype"] = parsed["enterobase_serotype1"]
-    enterobase_category["summary"]["antigenic_profile"] = ""
-    enterobase_category["summary"]["status"] = ""
+    update_consensus_summary(
+        fresh_serotype,
+        parsed["enterobase_serotype1"],
+        "",
+    )
 
-    enterobase_category["report"]["enterobase_serotype1"] = parsed["enterobase_serotype1"]
-    enterobase_category["report"]["enterobase_count1"] = parsed["enterobase_count1"]
-    enterobase_category["report"]["enterobase_serotype2"] = parsed["enterobase_serotype2"]
-    enterobase_category["report"]["enterobase_count2"] = parsed["enterobase_count2"]
+    fresh_serotype["report"]["enterobase_serotype1"] = parsed["enterobase_serotype1"]
+    fresh_serotype["report"]["enterobase_count1"] = parsed["enterobase_count1"]
+    fresh_serotype["report"]["enterobase_serotype2"] = parsed["enterobase_serotype2"]
+    fresh_serotype["report"]["enterobase_count2"] = parsed["enterobase_count2"]
 
-    samplecomponent.set_category(enterobase_category)
-    sample.set_category(enterobase_category)
+    samplecomponent.set_category(fresh_serotype)
+    fresh_sample.set_category(fresh_serotype)
 
     samplecomponent.save_files()
-    common.set_status_and_save(sample, samplecomponent, "Success")
-
-    fresh_sample = Sample.load(samplecomponent.sample)
-    rebuild_final_serotype(fresh_sample)
     common.set_status_and_save(fresh_sample, samplecomponent, "Success")
 
     with open(
